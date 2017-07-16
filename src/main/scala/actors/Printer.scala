@@ -1,6 +1,6 @@
 package actors
 
-import actors.crawlers.Result
+import actors.crawlers.ProviderResult
 import akka.actor.Actor
 import com.typesafe.scalalogging.LazyLogging
 
@@ -9,12 +9,12 @@ import com.typesafe.scalalogging.LazyLogging
   */
 class Printer extends Actor with LazyLogging {
   override def receive: Receive = {
-    case Result(items) =>
+    case ProviderResult(provider, items) =>
       val message = items
         .sortBy(x => (x.price, -x.lastDate.getMillis))
         .map(x => s"${x.title}, ${x.price}, ${x.url}, ${x.lastDate}")
         .mkString("\n")
 
-      logger.info(s"Found ${items.length} items from ${sender.path.name}:\n$message")
+      logger.info(s"Found ${items.length} items from $provider:\n$message")
   }
 }

@@ -15,14 +15,18 @@ object Kaidee {
   case class Item(item_id: Long,
                   item_price: Int,
                   item_topic: String,
+                  location: Location,
                   photos: Seq[Photo],
                   post_date: Date,
                   last_action_date: Date
                  ) {
     val url = s"https://www.kaidee.com/product-$item_id"
+    val place = s"${location.district.name} (${location.province.name})"
   }
 
   case class Photo(large: String, medium: String, thumb: Option[String])
+  case class Location(district: Place, province: Place)
+  case class Place(id: Int, name: String)
 }
 
 /**
@@ -55,9 +59,12 @@ class KaideeCrawler(translator: ActorRef) extends Actor with LazyLogging {
 
         val items = result.items
           .filter(x => x.item_price >= minPrice && x.item_price <= maxPrice)
-          .map(item => ResultItem(item.url, item.item_topic, item.item_price, new DateTime(item.last_action_date)))
+          .map { item =>
+            val img = item.photos.headOption.map(_.medium).getOrElse("")
+            ResultItem(item.url, img, item.item_topic, item.item_price, new DateTime(item.last_action_date), item.place)
+          }
 
-        currentSender ! Result(items)
+        currentSender ! ProviderResult("kaidee", items)
 
 //        val translations = itemMap.map { case (id, item) =>
 //          import akka.pattern.ask

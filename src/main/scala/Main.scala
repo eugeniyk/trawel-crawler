@@ -1,6 +1,7 @@
 import actors.Supervisor
 import actors.crawlers.Request
 import akka.actor.{ActorSystem, Props}
+import api.Api
 import com.typesafe.scalalogging.LazyLogging
 
 /**
@@ -8,7 +9,5 @@ import com.typesafe.scalalogging.LazyLogging
   */
 object Main extends App with LazyLogging {
   val system = ActorSystem("crawler")
-
-  val supervisor = system.actorOf(Props[Supervisor])
-  supervisor ! Request("CBR 250", 30000, 60000)
+  Api.init(system)
 }

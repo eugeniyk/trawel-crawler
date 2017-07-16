@@ -16,7 +16,31 @@ import scala.util.Try
   * Created by ekalashnikov on 12/11/2016 AD.
   */
 
+object CraiglistCrawler {
+  private val locationRg = ".*\\((.*)\\).*".r
+  private[crawlers] def extractLocation(input: String): String = {
+    input match {
+      case locationRg(loc) => loc
+      case _ => ""
+    }
+  }
+
+  private[crawlers] def extractPrice(input: String): Option[Int] = {
+    Try(input.substring(1).toInt).toOption
+  }
+
+  private[crawlers] def extractDate(input: String): DateTime = {
+    DateTime.parse(input, DateTimeFormat.forPattern("yyyy-MM-dd HH:mm"))
+  }
+
+  private val imgFormat = "http://images.craigslist.org/%s_300x300.jpg"
+  private[crawlers] def extractImgs(input: String): Seq[String] = {
+    Option(input).getOrElse("").split(",").withFilter(_.nonEmpty).map(_.substring(2)).map(imgFormat.format(_))
+  }
+}
+
 class CraiglistCrawler extends Actor with LazyLogging {
+  import CraiglistCrawler._
   implicit val ec = context.dispatcher
 
   override def receive: Receive = {
@@ -32,20 +56,29 @@ class CraiglistCrawler extends Actor with LazyLogging {
         val results = new mutable.ListBuffer[ResultItem]
         htmlDoc.$("#searchform .result-row").each(new JerryFunction() {
           override def onNode($this: Jerry, index: Int): Boolean = {
-            val url = s"http://bangkok.craigslist.co.th${$this.$("a.result-image").attr("href")}"
-            val date = DateTime.parse($this.$(".result-date").attr("datetime"), DateTimeFormat.forPattern("yyyy-MM-dd HH:mm"))
-            val title = $this.$(".result-title").text()
-            val price = Try($this.$(".result-meta .result-price").text().substring(1).toInt).toOption
+            val resultImg = $this.$("a.result-image")
 
-            if (price.isDefined) {
-              results.append(ResultItem(url, title, price.get, date))
+            val url = s"http://bangkok.craigslist.co.th${resultImg.attr("href")}"
+
+            val imgs = extractImgs(resultImg.attr("data-ids"))
+            val img = imgs.headOption.getOrElse("")
+            val title = $this.$(".result-title").text()
+            val meta = $this.$(".result-meta")
+            val date = extractDate($this.$(".result-date").attr("datetime"))
+            val price = extractPrice(meta.$(".result-price").text())
+            val location = extractLocation(meta.$(".result-hood").text())
+
+            price.foreach { p =>
+              val item = ResultItem(url, img, title, p, date, location)
+              results.append(item)
             }
+
             true
           }
         })
 
         val items = results.filter(x => x.price >= minPrice && x.price <= maxPrice)
-        currentSender ! Result(items)
+        currentSender ! ProviderResult("craiglist", items)
       }
   }
 }
