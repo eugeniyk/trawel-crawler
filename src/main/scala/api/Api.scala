@@ -35,8 +35,8 @@ object Api extends JsonResultFormats {
     val apiRoute: Route =
       path("api" / "search") {
         get {
-          parameters(('q.as[String], 'priceMin.as[Int] ?, 'priceMax.as[Int] ?)) { case (query, min, max) =>
-            val request = Request(query, min.getOrElse(0), max.getOrElse(Int.MaxValue))
+          parameters('q.as[String], 'priceMin.as[Int] ?, 'priceMax.as[Int] ?, 'sources.*) { case (query, min, max, sources) =>
+            val request = Request(query, min.getOrElse(0), max.getOrElse(Int.MaxValue), None, sources.toSet)
 
             complete {
               implicit val timeout = Timeout(1.minute)

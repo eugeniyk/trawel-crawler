@@ -20,3 +20,15 @@ body {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
+.item {
+    max-height: 200px;
+}
+
+.item-img {
+    width: 250px;
+}
+
+.section {
+
+}

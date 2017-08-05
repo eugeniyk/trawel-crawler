@@ -61,7 +61,6 @@ class CraiglistCrawler extends Actor with LazyLogging {
             val url = s"http://bangkok.craigslist.co.th${resultImg.attr("href")}"
 
             val imgs = extractImgs(resultImg.attr("data-ids"))
-            val img = imgs.headOption.getOrElse("")
             val title = $this.$(".result-title").text()
             val meta = $this.$(".result-meta")
             val date = extractDate($this.$(".result-date").attr("datetime"))
@@ -69,7 +68,7 @@ class CraiglistCrawler extends Actor with LazyLogging {
             val location = extractLocation(meta.$(".result-hood").text())
 
             price.foreach { p =>
-              val item = ResultItem(url, img, title, p, date, location)
+              val item = ResultItem(url, imgs, title, p, date, location)
               results.append(item)
             }
 

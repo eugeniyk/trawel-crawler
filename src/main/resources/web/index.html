@@ -10,6 +10,8 @@
     <script src="https://code.jquery.com/jquery-3.2.1.min.js" crossorigin="anonymous"></script>
     <script src="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.2/js/bootstrap.min.js"></script>
     <script src="https://rawgit.com/rzajac/angularjs-slider/master/dist/rzslider.js"></script>
+    <script src="js/lib/ui-bootstrap-custom-2.5.0.min.js"></script>
+    <script src="js/lib/ui-bootstrap-custom-tpls-2.5.0.min.js"></script>
     <script src="js/services/searchDataService.js"></script>
     <script src="js/controllers/searchCtrl.js"></script>
     <script src="js/app.js"></script>
@@ -41,26 +43,55 @@
         <!--<input type="range" class="form-control" id="priceMaxSl" ng-model="slider.maxValue" min="10000" max="90000" step="1000" placeholder="max price">-->
     </div>
 
+    <div class="checkbox">
+        <label>
+            <input type="checkbox" ng-model="source.craiglist">
+            Craiglist
+        </label>
+    </div>
+    <div class="checkbox">
+        <label>
+            <input type="checkbox" ng-model="source.kaidee">
+            Kaidee
+        </label>
+    </div>
+
     <span>
         <input type="submit" class="btn btn-primary" ng-click="doSearch()" value="search">
     </span>
 </form>
 
-<table class="table table-striped">
-    <tr ng-repeat="item in results | orderBy:'+price'">
-        <td>{{$index+1}}</td>
-        <td><img ng-src="{{item.img}}" alt="Img" /></td>
-        <td><a ng-href="{{item.url}}" target="_blank">{{item.title}}</a></td>
-        <td>{{item.price}}</td>
-        <td>{{item.location}}</td>
-        <td>{{item.lastDate}}</td>
-        <td>
-            <button class="btn btn-danger btn-mini" ng-click="" ng-hide="true">
-                <i class="icon-trash icon-white"></i>
-            </button>
-        </td>
-    </tr>
-</table>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-6 item" ng-repeat="item in results | orderBy:'+price'">
+            <div class="row">
+                <div class="col-sm-6">
+                    <div uib-carousel active="0" interval="0" no-wrap="false">
+                        <div uib-slide ng-repeat="img in item.imgs" index="$index">
+                            <img ng-src="{{img}}" style="margin:auto;">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="section">
+                        <label>Item:</label> <a ng-href="{{item.url}}" target="_blank">{{item.title}}</a>
+                    </div>
+                    <div class="section">
+                        <label>Price:</label> <span>{{item.price}}</span>
+                    </div>
+                    <div class="section">
+                        <label>Location:</label> <span>{{item.location}}</span>
+                    </div>
+                    <div class="section">
+                        <label>Last update:</label> <span>{{item.lastDate | date:'dd/MM/yyyy HH:mm'}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 
 </body>
 </html>

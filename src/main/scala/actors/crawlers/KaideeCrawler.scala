@@ -60,8 +60,8 @@ class KaideeCrawler(translator: ActorRef) extends Actor with LazyLogging {
         val items = result.items
           .filter(x => x.item_price >= minPrice && x.item_price <= maxPrice)
           .map { item =>
-            val img = item.photos.headOption.map(_.medium).getOrElse("")
-            ResultItem(item.url, img, item.item_topic, item.item_price, new DateTime(item.last_action_date), item.place)
+            val imgs = item.photos.map(_.medium)
+            ResultItem(item.url, imgs, item.item_topic, item.item_price, new DateTime(item.last_action_date), item.place)
           }
 
         currentSender ! ProviderResult("kaidee", items)
