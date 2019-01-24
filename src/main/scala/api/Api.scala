@@ -1,7 +1,7 @@
 package api
 
 import actors.Supervisor
-import actors.crawlers.{JsonResultFormats, ProviderResult, Request, Response}
+import actors.crawlers.{JsonResultFormats, Request, Response}
 import akka.actor.{ActorSystem, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.headers.HttpOriginRange
@@ -11,8 +11,8 @@ import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives
-import ch.megard.akka.http.cors.scaladsl.settings.CorsSettings
 import ch.megard.akka.http.cors.scaladsl.CorsDirectives._
+import ch.megard.akka.http.cors.scaladsl.settings.CorsSettings
 
 import scala.concurrent.duration._
 import scala.language.postfixOps

@@ -32,8 +32,9 @@ class Supervisor extends Actor {
 
   val kaideeCrawler: ActorRef = context.actorOf(Props(classOf[KaideeCrawler], translator), "kaidee")
   val craiglistCrawler: ActorRef = context.actorOf(Props(classOf[CraiglistCrawler]), "craiglist")
+  val bahtSoldCrawler: ActorRef = context.actorOf(Props(classOf[BahtSoldCrawler]), "bahtsold")
 
-  implicit val timeout: Timeout = Timeout(10.seconds)
+  implicit val timeout: Timeout = Timeout(20.seconds)
   implicit val ec: ExecutionContext = context.dispatcher
 
   override def receive: Receive = {
@@ -54,7 +55,11 @@ class Supervisor extends Actor {
         }.map(results => ProviderResult(results.head.provider, results.flatMap(_.items).distinct)) to printer)
       } else None
 
-      val providers = Seq(kaideeOF, craiglistOF).flatten
+      val bahtSoldOF = if (sources.contains("bahtsold")) {
+        Some((bahtSoldCrawler ? r).recoverWithLog("bahtsold") to printer)
+      } else None
+
+      val providers = Seq(kaideeOF, craiglistOF, bahtSoldOF).flatten
 
       //  Combine results
       Future.sequence(providers.map(_.future)).map(Response) pipeTo caller

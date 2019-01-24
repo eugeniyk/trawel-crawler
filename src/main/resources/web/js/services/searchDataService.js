@@ -9,7 +9,6 @@ angular.module('app.services', []).
         url: 'http://localhost:8080/api/search',
         params: { "q": query, "priceMin": min, "priceMax": max, "sources": sources }
       });
-//      return $http("/api/search?q=" + query);
     }
 
     return crawlerAPI;

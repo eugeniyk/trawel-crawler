@@ -2,15 +2,16 @@ angular.module('app.controllers', ['ui.bootstrap', 'rzModule']).controller('sear
   $scope.search = "";
   $scope.source = {
     craiglist: true,
-    kaidee: true
+    kaidee: true,
+    bahtsold: true
   };
   $scope.doSearch = doSearch;
   $scope.slider = {
-    minValue: 30000,
-    maxValue: 60000,
+    minValue: 50000,
+    maxValue: 100000,
     options: {
       floor: 10000,
-      ceil: 100000,
+      ceil: 300000,
       step: 1000
     }
   };

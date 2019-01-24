@@ -40,7 +40,7 @@ class KaideeCrawler(translator: ActorRef) extends Actor with LazyLogging {
   }
 
   override def receive: Receive = {
-    case Request(query, minPrice, maxPrice, pageNumber) =>
+    case Request(query, minPrice, maxPrice, pageNumber, _) =>
       val request = url("https://profx.24x7th.com/v5/search/listing")
         .POST
         .addHeader("publicToken", "lBOlvDZA2IcG3E1St6gwTTAETIXvZ2XCGnyE+z+2sck=")

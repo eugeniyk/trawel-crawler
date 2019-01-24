@@ -1,7 +1,5 @@
 package actors.crawlers
 
-import java.lang.Boolean
-
 import akka.actor.Actor
 import com.typesafe.scalalogging.LazyLogging
 import dispatch.{Http, as, url}
@@ -44,18 +42,18 @@ class CraiglistCrawler extends Actor with LazyLogging {
   implicit val ec = context.dispatcher
 
   override def receive: Receive = {
-    case Request(search, minPrice, maxPrice, pageNumber) =>
+    case Request(search, minPrice, maxPrice, pageNumber, _) =>
       val request = url("http://bangkok.craigslist.co.th/search/mcy")
           .addParameter("auto_transmission", "1")
           .addParameter("query", search)
           .addParameter("s", ((pageNumber.getOrElse(1)-1)*100).toString)
       val currentSender = sender
 
-      for (jsonResult <- Http(request > as.String)) {
-        val htmlDoc = Jerry.jerry(jsonResult)
+      for (htmlResult <- Http(request > as.String)) {
+        val htmlDoc = Jerry.jerry(htmlResult)
         val results = new mutable.ListBuffer[ResultItem]
         htmlDoc.$("#searchform .result-row").each(new JerryFunction() {
-          override def onNode($this: Jerry, index: Int): Boolean = {
+          override def onNode($this: Jerry, index: Int): java.lang.Boolean = {
             val resultImg = $this.$("a.result-image")
 
             val url = s"http://bangkok.craigslist.co.th${resultImg.attr("href")}"
