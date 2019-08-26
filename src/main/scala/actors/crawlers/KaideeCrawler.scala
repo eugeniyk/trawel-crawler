@@ -1,7 +1,6 @@
 package actors.crawlers
 
 import java.text.SimpleDateFormat
-import java.util.Date
 
 import akka.actor.{Actor, ActorRef}
 import com.typesafe.scalalogging.LazyLogging
@@ -12,19 +11,24 @@ import org.json4s.jackson.JsonMethods._
 
 object Kaidee {
   case class Result(total: Int, items: Seq[Item])
-  case class Item(item_id: Long,
-                  item_price: Int,
-                  item_topic: String,
-                  location: Location,
-                  photos: Seq[Photo],
-                  post_date: Date,
-                  last_action_date: Date
-                 ) {
-    val url = s"https://www.kaidee.com/product-$item_id"
-    val place = s"${location.district.name} (${location.province.name})"
+
+  case class Item(ad: Ad)
+
+  case class Ad(
+                 description: Option[String],
+                 first_approved_time: Option[String],
+                 images: Seq[ItemImage],
+                 price: Option[Int],
+                 title: Option[String],
+                 legacy_id: Option[Long]
+               ) {
+    val url = s"https://www.kaidee.com/product-${legacy_id.getOrElse("")}"
+    val place = ""//s"${location.district.name} (${location.province.name})"
   }
 
-  case class Photo(large: String, medium: String, thumb: Option[String])
+  case class ItemImage(sizes: ImageSizes)
+  case class ImageSizes(large: Image, medium: Image, thumb: Image)
+  case class Image(link: String)
   case class Location(district: Place, province: Place)
   case class Place(id: Int, name: String)
 }
@@ -41,27 +45,25 @@ class KaideeCrawler(translator: ActorRef) extends Actor with LazyLogging {
 
   override def receive: Receive = {
     case Request(query, minPrice, maxPrice, pageNumber, _) =>
-      val request = url("https://profx.24x7th.com/v5/search/listing")
+      val request = url("https://api.kaidee.com/0.7/ads/search")
         .POST
-        .addHeader("publicToken", "lBOlvDZA2IcG3E1St6gwTTAETIXvZ2XCGnyE+z+2sck=")
-        .addHeader("memberId", "6004137")
         .addHeader("Content-Type", "application/json")
         .addHeader("Accept", "*/*")
-        .addHeader("Referer", "https://www.kaidee.com/c12p9-motorcycle-motorcycle/bangkok/")
+        .addHeader("Referer", "https://www.kaidee.com/c12-motorcycle-motorcycle/bangkok/")
         .addHeader("uuid", "01e5cb1c5bba45e9bcbb5b3f57c3bceb") <<
-        s"""{"page":${pageNumber.getOrElse(1)},"limit":300,"cate_id":12,"province_id":9,"district_id":0,"facet":"ATTR_1","q":"$query","item_type":"","condition":"","attribute":[]}"""
-
+        s"""{"page":${pageNumber.getOrElse(1)},"limit":100,"cate_id":12,"province_id":9,"district_id":0,"q":"$query","attribute":[],"price":{"search_type":"range","from":$minPrice,"to":$maxPrice}}"""
       val currentSender = sender
 
       for (jsonResult <- Http(request > as.String)) {
         val json = parse(jsonResult)
         val result = json.extract[Kaidee.Result]
 
-        val items = result.items
-          .filter(x => x.item_price >= minPrice && x.item_price <= maxPrice)
+        val items = result.items.map(_.ad)
+          .filter(_.price.isDefined)
+          .filter(x => x.price.get >= minPrice && x.price.get <= maxPrice)
           .map { item =>
-            val imgs = item.photos.map(_.medium)
-            ResultItem(item.url, imgs, item.item_topic, item.item_price, new DateTime(item.last_action_date), item.place)
+            val imgs = item.images.map(_.sizes.medium.link)
+            ResultItem(item.url, imgs, item.title.getOrElse(""), item.description.getOrElse(""), item.price.get, DateTime.now, item.place)
           }
 
         currentSender ! ProviderResult("kaidee", items)

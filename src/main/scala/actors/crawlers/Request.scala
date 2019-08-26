@@ -15,7 +15,7 @@ case class Request(query: String = "",
 
 case class Response(results: Seq[ProviderResult])
 case class ProviderResult(provider: String, items: Seq[ResultItem])
-case class ResultItem(url: String, imgs: Seq[String], title: String, price: Int, lastDate: DateTime, location: String)
+case class ResultItem(url: String, imgs: Seq[String], title: String, description: String, price: Int, lastDate: DateTime, location: String)
 
 trait JsonResultFormats extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val jodaDateTimeFormat = new RootJsonFormat[DateTime] {
@@ -30,7 +30,7 @@ trait JsonResultFormats extends SprayJsonSupport with DefaultJsonProtocol {
     }
   }
 
-  implicit val resultItemFormat = jsonFormat6(ResultItem)
+  implicit val resultItemFormat = jsonFormat7(ResultItem)
   implicit val providerResultFormat = jsonFormat2(ProviderResult)
   implicit val responseFormat = jsonFormat1(Response)
 }

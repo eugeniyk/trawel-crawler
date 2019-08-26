@@ -43,10 +43,11 @@ class CraiglistCrawler extends Actor with LazyLogging {
 
   override def receive: Receive = {
     case Request(search, minPrice, maxPrice, pageNumber, _) =>
-      val request = url("http://bangkok.craigslist.co.th/search/mcy")
-          .addParameter("auto_transmission", "1")
+      val request = url("https://bangkok.craigslist.org/search/mca")
           .addParameter("query", search)
           .addParameter("s", ((pageNumber.getOrElse(1)-1)*100).toString)
+          .addParameter("min_price", minPrice.toString)
+          .addParameter("max_price", maxPrice.toString)
       val currentSender = sender
 
       for (htmlResult <- Http(request > as.String)) {
@@ -56,7 +57,7 @@ class CraiglistCrawler extends Actor with LazyLogging {
           override def onNode($this: Jerry, index: Int): java.lang.Boolean = {
             val resultImg = $this.$("a.result-image")
 
-            val url = s"http://bangkok.craigslist.co.th${resultImg.attr("href")}"
+            val url = s"https://bangkok.craigslist.org${resultImg.attr("href")}"
 
             val imgs = extractImgs(resultImg.attr("data-ids"))
             val title = $this.$(".result-title").text()
@@ -66,7 +67,7 @@ class CraiglistCrawler extends Actor with LazyLogging {
             val location = extractLocation(meta.$(".result-hood").text())
 
             price.foreach { p =>
-              val item = ResultItem(url, imgs, title, p, date, location)
+              val item = ResultItem(url, imgs, title, "", p, date, location)
               results.append(item)
             }
 

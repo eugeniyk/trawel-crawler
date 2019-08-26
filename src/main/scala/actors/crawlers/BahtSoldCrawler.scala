@@ -20,7 +20,7 @@ class BahtSoldCrawler() extends Actor {
 
   override def receive: Receive = {
     case Request(search, minPrice, maxPrice, pageNumber, _) =>
-      val request = url("http://www.bahtsold.com/quicksearch2")
+      val request = url("https://www.bahtsold.com/quicksearch2")
         .addQueryParameter("co", "Thailand-1")
         .addQueryParameter("ca", "9")    //  Category=Motocycle for sale
         .addQueryParameter("c1", "377")  //  SubCategory=Motocycle for sale; c2=691 - 500-999cc
@@ -36,24 +36,32 @@ class BahtSoldCrawler() extends Actor {
       for (htmlResult <- Http(request > as.String)) {
         val htmlDoc = Jerry.jerry(htmlResult)
         val results = new mutable.ListBuffer[ResultItem]
-        htmlDoc.$("#height_main_color .rows").each(new JerryFunction() {
+        htmlDoc.$(".items-list article").each(new JerryFunction() {
           override def onNode($this: Jerry, index: Int): java.lang.Boolean = {
-            val resultImg = $this.$(".image a")
+            val resultLink = $this.$("a.imgAsBg")
 
-            val url = resultImg.attr("href")
-            val img = resultImg.$("img").attr("src")
+            val url = resultLink.attr("href")
+            val img = $this.$("img").attr("src")
 
-            val title = $this.$(".offer h5").text()
+            val title = resultLink.attr("title")
 
             //val date = extractDate($this.$(".result-date").attr("datetime"))
-            val priceText = $this.$(".description p").last().text().replaceAll(" THB", "").replaceAll(",", "")
+            val description = $this.$(".item-content .inner p").text()
 
-            val price = Try(priceText.toInt).toOption
+            val price: Option[Int] = Try {
+              $this.$(".price-tag").text()
+              .replaceAll("THB", "")
+              .replaceAll(",", "")
+              .replaceAll(" ", "")
+              .replaceAll("\n", "")
+              .toInt
+            }.toOption
+
             val location = ""//extractLocation(meta.$(".result-hood").text())
             val date = DateTime.now()
 
             price.foreach { p =>
-              val item = ResultItem(url, Seq(img), title, p, date, location)
+              val item = ResultItem(url, Seq(img), title, description, p, date, location)
               results.append(item)
             }
 
